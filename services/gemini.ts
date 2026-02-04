@@ -3,9 +3,21 @@ import { Message } from "../types";
 
 // NOTE: In a real production app, you would proxy this through a backend to hide the key.
 // Since this is a client-side demo request, we assume the environment variable is present.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = process.env.API_KEY;
+
+if (!apiKey || apiKey === 'PLACEHOLDER_API_KEY') {
+  console.warn('⚠️  GEMINI_API_KEY not set. AI features will not work.');
+}
+
+const ai = apiKey && apiKey !== 'PLACEHOLDER_API_KEY' 
+  ? new GoogleGenAI({ apiKey })
+  : null;
 
 export const generateExplanation = async (topic: string, question: string): Promise<string> => {
+  if (!ai) {
+    return "🔧 AI features are disabled. Please add your GEMINI_API_KEY to the .env.local file and restart the server.";
+  }
+  
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -24,6 +36,11 @@ export const generateExplanation = async (topic: string, question: string): Prom
 };
 
 export const generateQuiz = async (topic: string) => {
+  if (!ai) {
+    console.warn('AI not initialized - skipping quiz generation');
+    return null;
+  }
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
